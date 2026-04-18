@@ -164,7 +164,7 @@
                         ${d.options.map((opt, oi) => `
                             <label class="cursor-pointer">
                                 <input type="radio" name="q${i}" value="${oi}" class="hidden peer" onchange="updProgress()">
-                                <div class="option-content p-4 border-2 border-slate-100 rounded-xl text-center font-medium transition-all peer-checked:border-blue-500 hover:bg-slate-50">${opt}</div>
+                                <div class="option-content peer-checked:border-blue-500">${opt}</div>
                             </label>
                         `).join('')}
                     </div>
