@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基礎西文一：第一課 動詞變化小考</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .option-label:hover {
+            background-color: #f1f5f9;
+        }
+        input[type="radio"]:checked + .option-content {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="pb-20">
+    <!-- Sticky Header with Progress Bar - Updated Background -->
+    <header class="sticky top-0 z-50 bg-sky-50/95 backdrop-blur-md border-b border-sky-200 py-4 px-4 shadow-md">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-sky-900">基礎西文一：第一課 動詞變化小考</h1>
+                    <p class="text-xs sm:text-sm text-sky-700 font-medium">每題 5 分，共 20 題</p>
+                </div>
+                <div class="flex items-center gap-3 min-w-[150px]">
+                    <div class="flex-1 h-3 bg-sky-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300 ease-out" style="width: 0%"></div>
+                    </div>
+                    <span id="progress-text" class="text-sm font-bold text-blue-700 whitespace-nowrap">0 / 20</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-3xl mx-auto px-4 mt-8">
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="space-y-6">
+            <!-- Questions will be injected here -->
+        </div>
+
+        <!-- Submit Button -->
+        <div class="mt-12 text-center">
+            <button id="submit-btn" onclick="checkAnswers()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-lg active:transform active:scale-95 text-lg">
+                檢查答案並計算分數
+            </button>
+        </div>
+
+        <!-- Result Modal -->
+        <div id="result-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl text-center animate-in fade-in zoom-in duration-300">
+                <h2 class="text-2xl font-bold mb-4 text-slate-800">測驗結果</h2>
+                <div class="text-7xl font-black text-blue-600 mb-4" id="score-display">0</div>
+                <p id="result-message" class="text-slate-600 mb-8 text-lg font-medium leading-relaxed"></p>
+                <button onclick="closeModal()" class="w-full bg-slate-800 text-white font-bold py-4 rounded-xl hover:bg-slate-700 transition-colors shadow-md">
+                    返回查看解析
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
+            { q: "ESTAR (tú)", options: ["estás", "está", "estuve"], correct: 0 },
+            { q: "PODER (yo)", options: ["puedo", "puede", "podemos"], correct: 0 },
+            { q: "REPETIR (tú)", options: ["repites", "repite", "repetimos"], correct: 0 },
+            { q: "ENTENDER (yo)", options: ["entiendo", "entiendes", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (tú)", options: ["te llamas", "se llama", "me llamo"], correct: 0 },
+            { q: "APELLIDARSE (él)", options: ["se apellida", "me apellido", "te apellidas"], correct: 0 },
+            { q: "SER (ellos)", options: ["son", "somos", "sois"], correct: 0 },
+            { q: "ESTAR (nosotros)", options: ["estamos", "están", "estuve"], correct: 0 },
+            { q: "PODER (él)", options: ["puede", "puedo", "pueden"], correct: 0 },
+            { q: "REPETIR (nosotros)", options: ["repetimos", "repiten", "repito"], correct: 0 },
+            { q: "ENTENDER (ellos)", options: ["entienden", "entiendo", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (yo)", options: ["me llamo", "te llamas", "se llama"], correct: 0 },
+            { q: "APELLIDARSE (nosotros)", options: ["nos apellidamos", "se apellidan", "me apellido"], correct: 0 },
+            { q: "LEER (yo)", options: ["leo", "lees", "lee"], correct: 0 },
+            { q: "MIRAR (tú)", options: ["miras", "mira", "miro"], correct: 0 },
+            { q: "ESCUCHAR (ellos)", options: ["escuchan", "escuchamos", "escucho"], correct: 0 },
+            { q: "ESCRIBIR (yo)", options: ["escribo", "escribe", "escribes"], correct: 0 },
+            { q: "PREGUNTAR (vosotros)", options: ["preguntáis", "preguntan", "pregunto"], correct: 0 },
+            { q: "HABLAR (ella)", options: ["habla", "hablas", "hablo"], correct: 0 }
+        ];
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = quizData.map((item, index) => `
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all duration-300" id="q-box-${index}">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="bg-blue-100 text-blue-600 font-bold px-3 py-1 rounded-lg text-sm">第 ${index + 1} 題</span>
+                        <h3 class="text-xl font-bold text-slate-800">${item.q}</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        ${item.options.map((opt, optIdx) => `
+                            <label class="relative flex items-center cursor-pointer group">
+                                <input type="radio" name="q${index}" value="${optIdx}" class="hidden peer" onchange="updateProgress()">
+                                <div class="option-content w-full p-4 border-2 border-slate-100 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-50 group-hover:bg-slate-50 transition-all text-center font-medium text-slate-700">
+                                    ${String.fromCharCode(97 + optIdx)}) ${opt}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="feedback-${index}" class="hidden mt-5 p-4 rounded-xl text-sm font-medium border"></div>
+                </div>
+            `).join('');
+        }
+
+        function updateProgress() {
+            const total = quizData.length;
+            let answered = 0;
+            
+            quizData.forEach((_, index) => {
+                if (document.querySelector(`input[name="q${index}"]:checked`)) {
+                    answered++;
+                }
+            });
+
+            const percentage = (answered / total) * 100;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${answered} / ${total}`;
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            let answeredCount = 0;
+
+            quizData.forEach((item, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const feedback = document.getElementById(`feedback-${index}`);
+                const qBox = document.getElementById(`q-box-${index}`);
+                
+                feedback.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'border-green-200', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-amber-50', 'text-amber-700', 'border-amber-200');
+                
+                if (selected) {
+                    answeredCount++;
+                    const val = parseInt(selected.value);
+                    if (val === item.correct) {
+                        score += 5;
+                        feedback.innerHTML = `<span class="text-lg mr-2">✓</span> 正確：${item.options[item.correct]}`;
+                        feedback.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
+                        qBox.classList.add('ring-2', 'ring-green-500/20');
+                    } else {
+                        feedback.innerHTML = `<span class="text-lg mr-2">✗</span> 錯誤。正確答案是：<span class="font-bold underline">${String.fromCharCode(97 + item.correct)}) ${item.options[item.correct]}</span>`;
+                        feedback.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+                        qBox.classList.add('ring-2', 'ring-red-500/20');
+                    }
+                } else {
+                    feedback.innerHTML = `<span class="text-lg mr-2">⚠</span> 尚未回答。正確答案是：${String.fromCharCode(97 + item.correct)}) ${item.options[item.correct]}`;
+                    feedback.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                }
+                feedback.classList.remove('hidden');
+            });
+
+            const scoreDisplay = document.getElementById('score-display');
+            const resultMsg = document.getElementById('result-message');
+            const modal = document.getElementById('result-modal');
+
+            scoreDisplay.textContent = score;
+            if (score === 100) {
+                resultMsg.textContent = "太棒了！完美的表現！¡Excelente! 你已經完全掌握了這一課的動詞變化。";
+            } else if (score >= 80) {
+                resultMsg.textContent = "做得好！¡Muy bien! 你對動詞變化的掌握度很高，只要再注意一點細節就能滿分。";
+            } else if (score >= 60) {
+                resultMsg.textContent = "及格了！不過建議再多複習不規則變位（如 PODER, REPETIR）的部分。";
+            } else {
+                resultMsg.textContent = "還需要再加油喔！西文動詞變化是所有句子的靈魂，多練習幾次一定會進步！¡Ánimo!";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.onload = renderQuiz;
+    </script>
+</body>
+</html>
