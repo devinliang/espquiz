@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基礎西文一：第一課 動詞變化小考</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            /* 背景使用最淺的米綠色調低飽和度版本 */
+            background-color: #f1f3e9; 
+        }
+        /* 單選按鈕選中狀態：使用萊姆綠 #9FC131 與 深綠 #005C53 */
+        input[type="radio"]:checked + .option-content {
+            border-color: #005C53;
+            background-color: #f4f9e8;
+            color: #005C53;
+            box-shadow: 0 4px 12px -2px rgba(159, 193, 49, 0.3);
+        }
+        .no-scroll { overflow: hidden; }
+    </style>
+</head>
+<body class="pb-20 no-scroll text-[#042940]">
+
+    <div id="entry-modal" class="fixed inset-0 bg-[#042940]/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-[#D6D58E]/30">
+            <h2 class="text-2xl font-bold mb-6 text-center text-[#042940]">輸入學號開始小考</h2>
+            <input type="text" id="student-id-input" placeholder="學號" 
+                class="w-full px-4 py-3 bg-[#f1f3e9] border border-[#D6D58E] rounded-xl mb-6 focus:ring-2 focus:ring-[#9FC131] focus:outline-none transition-all">
+            <button onclick="startQuiz()" 
+                class="w-full bg-[#005C53] text-white font-bold py-4 rounded-xl hover:bg-[#042940] active:scale-95 transition-all shadow-lg shadow-[#005C53]/20">
+                開始小考
+            </button>
+        </div>
+    </div>
+
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#D6D58E]/50 py-4 px-6 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-[#042940]">基礎西文一：第一課 動詞變化小考</h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <span id="user-display" class="text-xs bg-[#D6D58E]/40 text-[#005C53] px-2 py-0.5 rounded-md font-mono font-bold"></span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-1 sm:max-w-md justify-end">
+                <div class="text-lg font-mono font-bold text-[#005C53] bg-[#9FC131]/10 px-3 py-1 rounded-lg border border-[#9FC131]/20" id="header-timer">00:00</div>
+                <div class="flex-1 max-w-[150px] sm:max-w-none">
+                    <div class="flex justify-between mb-1">
+                        <span id="progress-text" class="text-xs font-bold text-[#9FC131]">0 / 20</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="progress-bar" class="bg-[#DBF227] h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(219,242,39,0.5)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 mt-10">
+        <div id="quiz-container" class="space-y-6">
+            </div>
+        <div class="mt-12 text-center pb-10">
+            <button onclick="checkAnswers()" 
+                class="bg-[#042940] text-white font-bold py-4 px-16 rounded-2xl shadow-xl hover:bg-[#005C53] transition-all active:scale-95 tracking-widest">
+                提交答案
+            </button>
+        </div>
+    </main>
+
+    <div id="result-modal" class="hidden fixed inset-0 bg-[#042940]/90 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-[2rem] p-10 max-w-sm w-full shadow-2xl text-center border border-[#DBF227]/30">
+            <h2 class="text-2xl font-bold mb-4 text-[#042940]">測驗結束</h2>
+            <div class="bg-[#f1f3e9] rounded-2xl p-6 mb-8 border border-[#D6D58E]/50">
+                <p class="text-[#005C53] text-sm mb-1 font-medium">學號：<span id="res-id" class="font-bold text-[#042940]"></span></p>
+                <p class="text-[#005C53] text-sm mb-1">時間：<span id="res-date" class="text-[#042940]"></span></p>
+                <p class="text-[#005C53] text-sm mb-4">耗時：<span id="res-time" class="text-[#042940] font-bold"></span></p>
+                <div class="relative inline-block">
+                    <p class="text-6xl font-black text-[#005C53]" id="res-score">0</p>
+                    <div class="absolute -bottom-2 left-0 w-full h-2 bg-[#DBF227]/40 rounded-full"></div>
+                </div>
+                <p class="text-[#9FC131] text-xs mt-3 font-extrabold tracking-widest uppercase">Score Result</p>
+            </div>
+            <p id="res-msg" class="text-[#042940] mb-10 font-bold text-lg italic"></p>
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="closeModal()" class="bg-[#005C53] text-white py-4 rounded-xl font-bold hover:bg-[#042940] transition-all shadow-lg shadow-[#005C53]/20">查看解析 Review</button>
+                <button onclick="resetQuiz()" class="text-[#9FC131] py-2 rounded-xl font-bold hover:text-[#005C53] transition-colors text-sm">重新測驗 Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 程式邏輯完全保持不變 (保持原始 rawData, shuffle, startQuiz 等函數)
+        let studentId = "";
+        let startTime, endTime, timerInterval;
+        let currentData = [];
+
+        const rawData = [
+            { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
+            { q: "ESTAR (tú)", options: ["estás", "está", "estuve"], correct: 0 },
+            { q: "PODER (yo)", options: ["puedo", "puede", "podemos"], correct: 0 },
+            { q: "REPETIR (tú)", options: ["repites", "repite", "repetimos"], correct: 0 },
+            { q: "ENTENDER (yo)", options: ["entiendo", "entiendes", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (tú)", options: ["te llamas", "se llama", "me llamo"], correct: 0 },
+            { q: "APELLIDARSE (él)", options: ["se apellida", "me apellido", "te apellidas"], correct: 0 },
+            { q: "SER (ellos)", options: ["son", "somos", "sois"], correct: 0 },
+            { q: "ESTAR (nosotros)", options: ["estamos", "están", "estuve"], correct: 0 },
+            { q: "PODER (él)", options: ["puede", "puedo", "pueden"], correct: 0 },
+            { q: "REPETIR (nosotros)", options: ["repetimos", "repiten", "repito"], correct: 0 },
+            { q: "ENTENDER (ellos)", options: ["entienden", "entiendo", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (yo)", options: ["me llamo", "te llamas", "se llama"], correct: 0 },
+            { q: "APELLIDARSE (nosotros)", options: ["nos apellidamos", "se apellidan", "me apellido"], correct: 0 },
+            { q: "LEER (yo)", options: ["leo", "lees", "lee"], correct: 0 },
+            { q: "MIRAR (tú)", options: ["miras", "mira", "miro"], correct: 0 },
+            { q: "ESCUCHAR (ellos)", options: ["escuchan", "escuchamos", "escucho"], correct: 0 },
+            { q: "ESCRIBIR (yo)", options: ["escribo", "escribe", "escribes"], correct: 0 },
+            { q: "PREGUNTAR (vosotros)", options: ["preguntáis", "preguntan", "pregunto"], correct: 0 },
+            { q: "HABLAR (ella)", options: ["habla", "hablas", "hablo"], correct: 0 }
+        ];
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startQuiz() {
+            const val = document.getElementById('student-id-input').value.trim();
+            if (!val) { alert("請輸入學號"); return; }
+            studentId = val;
+            document.getElementById('user-display').textContent = `ESTUDIANTE: ${studentId}`;
+            document.getElementById('entry-modal').classList.add('hidden');
+            document.body.classList.remove('no-scroll');
+            window.scrollTo(0, 0);
+            startTime = new Date();
+            endTime = null;
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateHeaderTimer, 1000);
+            initData();
+            render();
+            updProgress();
+        }
+
+        function updateHeaderTimer() {
+            if (!startTime || endTime) return;
+            const now = new Date();
+            const sec = Math.floor((now - startTime) / 1000);
+            const mins = String(Math.floor(sec / 60)).padStart(2, '0');
+            const secs = String(sec % 60).padStart(2, '0');
+            document.getElementById('header-timer').textContent = `${mins}:${secs}`;
+        }
+
+        function initData() {
+            currentData = rawData.map(d => {
+                const opts = [...d.options];
+                const correctText = opts[d.correct];
+                shuffle(opts);
+                return { q: d.q, options: opts, correct: opts.indexOf(correctText) };
+            });
+        }
+
+        function render() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = currentData.map((d, i) => `
+                <div class="bg-white rounded-[1.5rem] shadow-sm border border-[#D6D58E]/30 p-6 md:p-8" id="q-box-${i}">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="bg-[#9FC131] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm shadow-[#9FC131]/30">${i+1}</span>
+                        <h3 class="text-xl font-bold text-[#042940]">${d.q}</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${d.options.map((opt, oi) => `
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="q${i}" value="${oi}" class="hidden peer" onchange="updProgress()">
+                                <div class="option-content p-4 border-2 border-[#f1f3e9] bg-[#f1f3e9]/30 rounded-xl text-center font-bold text-[#005C53] transition-all hover:bg-white hover:border-[#9FC131]/50 group-hover:shadow-md">
+                                    ${opt}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="f-${i}" class="hidden mt-6 p-4 rounded-xl text-sm font-bold border transition-all duration-500"></div>
+                </div>
+            `).join('');
+        }
+
+        function updProgress() {
+            let done = 0;
+            currentData.forEach((_, i) => { if(document.querySelector(`input[name="q${i}"]:checked`)) done++; });
+            document.getElementById('progress-bar').style.width = (done/20*100)+'%';
+            document.getElementById('progress-text').textContent = `進度：${done} / 20`;
+        }
+
+        function checkAnswers() {
+            if (!endTime) { endTime = new Date(); clearInterval(timerInterval); }
+            const sec = Math.floor((endTime - startTime) / 1000);
+            let score = 0;
+            currentData.forEach((d, i) => {
+                const sel = document.querySelector(`input[name="q${i}"]:checked`);
+                const f = document.getElementById(`f-${i}`);
+                const isCorrect = sel && parseInt(sel.value) === d.correct;
+                f.className = "mt-6 p-4 rounded-xl text-sm font-bold border " + 
+                            (isCorrect ? "bg-[#f4f9e8] text-[#005C53] border-[#9FC131]/30" : "bg-red-50 text-red-700 border-red-100");
+                if (isCorrect) { score += 5; f.textContent = "✓ ¡Correcto!"; } 
+                else { f.textContent = `✗ Incorrecto. Respuesta: ${d.options[d.correct]}`; }
+                f.classList.remove('hidden');
+            });
+            document.getElementById('res-id').textContent = studentId;
+            document.getElementById('res-date').textContent = endTime.toLocaleString('zh-TW', { hour12: false });
+            document.getElementById('res-time').textContent = `${Math.floor(sec/60)}分${sec%60}秒`;
+            document.getElementById('res-score').textContent = score;
+            const msg = document.getElementById('res-msg');
+            if (score === 100) msg.textContent = "¡Excelente! 完美掌握！";
+            else if (score >= 80) msg.textContent = "¡Muy bien! 表現優異！";
+            else if (score >= 60) msg.textContent = "及格了，再接再厲！";
+            else msg.textContent = "¡Ánimo! 還需要多練習喔。";
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function resetQuiz() {
+            clearInterval(timerInterval);
+            document.getElementById('header-timer').textContent = "00:00";
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('entry-modal').classList.remove('hidden');
+            document.body.classList.add('no-scroll');
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('progress-text').textContent = `0 / 20`;
+            window.scrollTo(0, 0);
+        }
+
+        function closeModal() { 
+            document.getElementById('result-modal').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -19,7 +19,7 @@
             </div>
             <h2 class="text-2xl font-bold mb-2 text-slate-800">歡迎參加挑戰</h2>
             <p class="text-slate-500 mb-6 text-sm">請輸入學號以開始挑戰</p>
-            <input type="text" id="student-id-input" placeholder="例如: 1114204001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl mb-6 focus:border-blue-500 focus:outline-none font-mono">
+            <input type="text" id="student-id-input" placeholder="例如: B11001001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl mb-6 focus:border-blue-500 focus:outline-none font-mono">
             <button onclick="startQuiz()" class="start-btn">開始挑戰 ¡Vamos!</button>
         </div>
     </div>
@@ -234,6 +234,12 @@
             document.getElementById('result-modal').classList.add('hidden');
             document.getElementById('entry-modal').classList.remove('hidden');
             document.body.classList.add('no-scroll');
+            
+            // 重新启用所有答案选项
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.disabled = false;
+            });
+            
             submitted = false;
             lastScore = 0;
             lastTimeSec = 0;
