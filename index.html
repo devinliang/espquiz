@@ -3,144 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基礎西文一：第一課 動詞變化小考 (增強版)</title>
+    <title>基礎西文一：第一課 動詞變化小考</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Inter:wght@400;600;800&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .option-label:hover {
             background-color: #f1f5f9;
         }
-
-        .option-content {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         input[type="radio"]:checked + .option-content {
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            border-color: #3b82f6;
+            background-color: #eff6ff;
         }
-
-        /* 彩帶特效動畫 */
-        @keyframes confetti {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background-color: #f00;
-            z-index: 100;
-            top: -10px;
-            pointer-events: none;
+        /* 禁止捲動直到輸入學號 */
+        .no-scroll {
+            overflow: hidden;
         }
     </style>
 </head>
-<body class="pb-24">
-    <!-- Header: Sticky with Progress & Timer -->
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-sky-200 shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-3 sm:py-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="bg-blue-600 p-2 rounded-lg hidden sm:block">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    </div>
-                    <div>
-                        <h1 class="text-lg sm:text-xl font-bold text-slate-800 leading-tight">西文動詞變化小考</h1>
-                        <p class="text-xs text-slate-500 font-medium">Lcción 1: Conjugación de verbos</p>
+<body class="pb-20 no-scroll">
+    <!-- Entry Modal (Input Student ID) -->
+    <div id="entry-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-slate-800">歡迎參加測驗</h2>
+            <p class="text-slate-500 mb-6 text-sm">請先輸入您的學號以開始練習</p>
+            <div class="mb-6 text-left">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">學號 / Student ID</label>
+                <input type="text" id="student-id-input" placeholder="例如: B11001001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:border-blue-500 focus:outline-none transition-colors font-mono">
+            </div>
+            <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95">
+                開始測驗 ¡Vamos!
+            </button>
+        </div>
+    </div>
+
+    <!-- Sticky Header -->
+    <header class="sticky top-0 z-50 bg-sky-50/95 backdrop-blur-md border-b border-sky-200 py-4 px-4 shadow-md">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-sky-900">基礎西文一：第一課 動詞變化小考</h1>
+                    <div class="flex items-center gap-2">
+                        <span id="current-user-display" class="text-xs bg-sky-200/50 text-sky-800 px-2 py-0.5 rounded font-mono font-bold">學號未載入</span>
+                        <p class="text-xs sm:text-sm text-sky-700 font-medium">每題 5 分，共 20 題</p>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-6">
-                    <!-- Timer -->
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Time</span>
-                        <span id="timer" class="text-lg font-mono font-bold text-slate-700">00:00</span>
+                <div class="flex items-center gap-3 min-w-[150px]">
+                    <div class="flex-1 h-3 bg-sky-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300 ease-out" style="width: 0%"></div>
                     </div>
-                    
-                    <!-- Progress Container -->
-                    <div class="flex-1 md:flex-none md:w-48">
-                        <div class="flex justify-between items-end mb-1">
-                            <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Progress</span>
-                            <span id="progress-text" class="text-xs font-bold text-blue-600">0 / 20</span>
-                        </div>
-                        <div class="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                            <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500 ease-out" style="width: 0%"></div>
-                        </div>
-                    </div>
+                    <span id="progress-text" class="text-sm font-bold text-blue-700 whitespace-nowrap">0 / 20</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-8">
-        <!-- Quiz Intro -->
-        <div class="bg-blue-600 rounded-2xl p-6 mb-8 text-white shadow-lg shadow-blue-200 flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-bold mb-1">準備好了嗎？ ¡Vamos!</h2>
-                <p class="text-blue-100 text-sm">題目順序已隨機排列，點選後會自動累計進度。</p>
-            </div>
-            <button onclick="window.location.reload()" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            </button>
-        </div>
-
+    <div class="max-w-3xl mx-auto px-4 mt-8">
         <!-- Quiz Container -->
         <div id="quiz-container" class="space-y-6">
-            <!-- Questions injected by JS -->
+            <!-- Questions will be injected here -->
         </div>
 
-        <!-- Action Section -->
-        <div class="mt-12 mb-16 flex flex-col items-center">
-            <button id="submit-btn" onclick="checkAnswers()" class="group relative bg-slate-800 hover:bg-black text-white font-bold py-5 px-16 rounded-2xl transition-all shadow-xl hover:shadow-2xl active:scale-95 text-xl flex items-center gap-3">
-                <span>提交並查看結果</span>
-                <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+        <!-- Submit Button -->
+        <div class="mt-12 text-center">
+            <button id="submit-btn" onclick="checkAnswers()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-lg active:transform active:scale-95 text-lg">
+                檢查答案並計算分數
             </button>
-            <p class="mt-4 text-slate-400 text-sm">請檢查所有題目是否皆已完成答題</p>
         </div>
-    </main>
 
-    <!-- Result Modal -->
-    <div id="result-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[2rem] p-8 max-w-lg w-full shadow-2xl text-center transform transition-all overflow-hidden relative">
-            <!-- Decorative circle -->
-            <div class="absolute -top-12 -right-12 w-40 h-40 bg-blue-50 rounded-full -z-10"></div>
-            
-            <h2 class="text-2xl font-black mb-2 text-slate-800 italic">RESULTADO</h2>
-            <div class="relative inline-block mb-6">
-                <div class="text-8xl font-black text-blue-600 drop-shadow-sm" id="score-display">0</div>
-                <div class="absolute -right-8 top-0 text-xl font-bold text-slate-400">/ 100</div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter">完成時間</div>
-                    <div id="final-time" class="text-xl font-bold text-slate-700 font-mono">00:00</div>
+        <!-- Result Modal -->
+        <div id="result-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+            <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center animate-in fade-in zoom-in duration-300">
+                <h2 class="text-2xl font-bold mb-4 text-slate-800">測驗結果</h2>
+                
+                <!-- Student Info Section -->
+                <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100 text-left space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400 text-xs font-bold">學號</span>
+                        <span id="final-student-id" class="text-slate-700 font-bold font-mono"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200 pb-1 mb-1">
+                        <span class="text-slate-400 text-xs font-bold">完成日期</span>
+                        <span id="completion-date" class="text-slate-700 font-medium text-sm"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400 text-xs font-bold">耗時</span>
+                        <span id="completion-duration" class="text-blue-600 font-bold"></span>
+                    </div>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter">正確題數</div>
-                    <div id="correct-count" class="text-xl font-bold text-slate-700">0 / 20</div>
-                </div>
-            </div>
 
-            <p id="result-message" class="text-slate-600 mb-8 text-lg font-medium italic"></p>
-            
-            <div class="flex flex-col gap-3">
-                <button onclick="closeModal()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-                    查看詳解與錯題
-                </button>
-                <button onclick="window.location.reload()" class="w-full bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl hover:bg-slate-200 transition-all">
-                    重新挑戰
-                </button>
+                <div class="text-7xl font-black text-blue-600 mb-4" id="score-display">0</div>
+                <p id="result-message" class="text-slate-600 mb-8 text-lg font-medium leading-relaxed"></p>
+                
+                <div class="flex flex-col gap-3">
+                    <button onclick="closeModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors shadow-md">
+                        查看解析
+                    </button>
+                    <button onclick="resetQuiz()" class="w-full bg-blue-100 text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-200 transition-colors">
+                        重新測驗
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 題目資料
-        const originalData = [
+        let studentId = "";
+        let quizStartTime = null;
+        let quizEndTime = null; // 新增：用於鎖定完成時間
+
+        const quizData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
             { q: "ESTAR (tú)", options: ["estás", "está", "estuve"], correct: 0 },
             { q: "PODER (yo)", options: ["puedo", "puede", "podemos"], correct: 0 },
@@ -163,161 +141,144 @@
             { q: "HABLAR (ella)", options: ["habla", "hablas", "hablo"], correct: 0 }
         ];
 
-        let quizData = [];
-        let startTime;
-        let timerInterval;
-
-        // 洗牌演算法
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+        function startQuiz() {
+            const input = document.getElementById('student-id-input');
+            if (!input.value.trim()) {
+                input.classList.add('border-red-500');
+                input.placeholder = "學號不可為空！";
+                return;
             }
-            return array;
-        }
-
-        function startTimer() {
-            startTime = Date.now();
-            timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                const secs = String(elapsed % 60).padStart(2, '0');
-                document.getElementById('timer').textContent = `${mins}:${secs}`;
-            }, 1000);
+            
+            studentId = input.value.trim();
+            document.getElementById('current-user-display').textContent = studentId;
+            document.getElementById('entry-modal').classList.add('hidden');
+            document.body.classList.remove('no-scroll');
+            
+            // 記錄開始時間，並清空之前的結束時間
+            quizStartTime = new Date();
+            quizEndTime = null; 
+            renderQuiz();
         }
 
         function renderQuiz() {
-            quizData = shuffleArray([...originalData]);
             const container = document.getElementById('quiz-container');
             container.innerHTML = quizData.map((item, index) => `
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 transition-all duration-300 hover:shadow-md" id="q-box-${index}">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-4">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-black text-xs">#${index + 1}</span>
-                            <h3 class="text-2xl font-extrabold text-slate-800 tracking-tight underline decoration-blue-200 decoration-4 underline-offset-4">${item.q}</h3>
-                        </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all duration-300" id="q-box-${index}">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="bg-blue-100 text-blue-600 font-bold px-3 py-1 rounded-lg text-sm">第 ${index + 1} 題</span>
+                        <h3 class="text-xl font-bold text-slate-800">${item.q}</h3>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         ${item.options.map((opt, optIdx) => `
                             <label class="relative flex items-center cursor-pointer group">
                                 <input type="radio" name="q${index}" value="${optIdx}" class="hidden peer" onchange="updateProgress()">
-                                <div class="option-content w-full py-4 px-6 border-2 border-slate-100 rounded-2xl peer-checked:border-blue-500 peer-checked:bg-blue-50/50 group-hover:bg-slate-50 transition-all text-center font-bold text-slate-600 peer-checked:text-blue-700">
+                                <div class="option-content w-full p-4 border-2 border-slate-100 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-50 group-hover:bg-slate-50 transition-all text-center font-medium text-slate-700">
                                     ${String.fromCharCode(97 + optIdx)}) ${opt}
                                 </div>
                             </label>
                         `).join('')}
                     </div>
-                    <div id="feedback-${index}" class="hidden mt-6 animate-in slide-in-from-top-2 duration-300">
-                        <div class="p-4 rounded-2xl border-2 flex items-start gap-3">
-                            <div id="feedback-icon-${index}" class="mt-0.5"></div>
-                            <div>
-                                <p id="feedback-text-${index}" class="font-bold text-base"></p>
-                                <p class="text-xs opacity-70 mt-1">單數/複數、人稱與動詞結尾需匹配。</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="feedback-${index}" class="hidden mt-5 p-4 rounded-xl text-sm font-medium border"></div>
                 </div>
             `).join('');
-            startTimer();
         }
 
         function updateProgress() {
             const total = quizData.length;
             let answered = 0;
+            
             quizData.forEach((_, index) => {
-                if (document.querySelector(`input[name="q${index}"]:checked`)) answered++;
+                if (document.querySelector(`input[name="q${index}"]:checked`)) {
+                    answered++;
+                }
             });
+
             const percentage = (answered / total) * 100;
             document.getElementById('progress-bar').style.width = `${percentage}%`;
             document.getElementById('progress-text').textContent = `${answered} / ${total}`;
         }
 
-        function createConfetti() {
-            for(let i=0; i<50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.backgroundColor = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][Math.floor(Math.random()*5)];
-                confetti.style.animation = `confetti ${Math.random() * 3 + 2}s linear forwards`;
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 5000);
-            }
-        }
-
         function checkAnswers() {
-            clearInterval(timerInterval);
-            let score = 0;
-            let correctCount = 0;
-            let firstWrongIndex = -1;
+            // 如果是第一次點擊，記錄結束時間
+            if (!quizEndTime) {
+                quizEndTime = new Date();
+            }
+            
+            const durationMs = quizEndTime - quizStartTime;
+            
+            // 格式化耗時
+            const totalSeconds = Math.floor(durationMs / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const durationText = minutes > 0 ? `${minutes} 分 ${seconds} 秒` : `${seconds} 秒`;
 
+            let score = 0;
             quizData.forEach((item, index) => {
                 const selected = document.querySelector(`input[name="q${index}"]:checked`);
                 const feedback = document.getElementById(`feedback-${index}`);
-                const feedbackText = document.getElementById(`feedback-text-${index}`);
-                const feedbackIcon = document.getElementById(`feedback-icon-${index}`);
                 const qBox = document.getElementById(`q-box-${index}`);
                 
-                feedback.classList.remove('hidden');
-                const feedbackContainer = feedback.querySelector('div');
-                feedbackContainer.className = "p-4 rounded-2xl border-2 flex items-start gap-3";
-
+                feedback.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'border-green-200', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-amber-50', 'text-amber-700', 'border-amber-200');
+                
                 if (selected) {
                     const val = parseInt(selected.value);
                     if (val === item.correct) {
                         score += 5;
-                        correctCount++;
-                        feedbackContainer.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-100');
-                        feedbackIcon.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`;
-                        feedbackText.textContent = `太棒了！正確答案就是 ${item.options[item.correct]}`;
+                        feedback.innerHTML = `<span class="text-lg mr-2">✓</span> 正確：${item.options[item.correct]}`;
+                        feedback.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
+                        qBox.classList.add('ring-2', 'ring-green-500/20');
                     } else {
-                        if (firstWrongIndex === -1) firstWrongIndex = index;
-                        feedbackContainer.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-100');
-                        feedbackIcon.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
-                        feedbackText.innerHTML = `可惜！正確答案應為 <span class="underline decoration-double">${item.options[item.correct]}</span>`;
-                        qBox.classList.add('ring-4', 'ring-rose-500/10');
+                        feedback.innerHTML = `<span class="text-lg mr-2">✗</span> 錯誤。正確答案是：<span class="font-bold underline">${String.fromCharCode(97 + item.correct)}) ${item.options[item.correct]}</span>`;
+                        feedback.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+                        qBox.classList.add('ring-2', 'ring-red-500/20');
                     }
                 } else {
-                    if (firstWrongIndex === -1) firstWrongIndex = index;
-                    feedbackContainer.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-100');
-                    feedbackIcon.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
-                    feedbackText.textContent = `這題沒有回答喔。正確答案是 ${item.options[item.correct]}`;
+                    feedback.innerHTML = `<span class="text-lg mr-2">⚠</span> 尚未回答。正確答案是：${String.fromCharCode(97 + item.correct)}) ${item.options[item.correct]}`;
+                    feedback.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
                 }
+                feedback.classList.remove('hidden');
             });
 
-            // Update Modal Data
+            // 使用鎖定的結束時間來顯示完成日期
+            const dateStr = quizEndTime.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = quizEndTime.toLocaleTimeString('zh-TW', { hour12: false });
+
+            // 更新結果視窗
+            document.getElementById('final-student-id').textContent = studentId;
+            document.getElementById('completion-date').textContent = `${dateStr} ${timeStr}`;
+            document.getElementById('completion-duration').textContent = durationText;
             document.getElementById('score-display').textContent = score;
-            document.getElementById('correct-count').textContent = `${correctCount} / 20`;
-            document.getElementById('final-time').textContent = document.getElementById('timer').textContent;
-            
+
             const resultMsg = document.getElementById('result-message');
             if (score === 100) {
-                resultMsg.textContent = "¡Increíble! 你是西文動詞大師！完美的表現值得大聲喝采！";
-                createConfetti();
+                resultMsg.textContent = "太棒了！完美的表現！¡Excelente! 你已經完全掌握了。";
             } else if (score >= 80) {
-                resultMsg.textContent = "¡Muy bien! 表現優異，你已經掌握了大部分的核心變化，再接再厲。";
+                resultMsg.textContent = "做得好！¡Muy bien! 你對動詞變化的掌握度很高。";
             } else if (score >= 60) {
-                resultMsg.textContent = "¡Bien! 通過測驗了，建議針對標註紅色的題目進行加強複習。";
+                resultMsg.textContent = "及格了！建議再多複習不規則變位的部分。";
             } else {
-                resultMsg.textContent = "¡Ánimo! 不要氣餒，動詞位移是西文最難的一環，多練習幾次就會記住了。";
+                resultMsg.textContent = "還需要再加油喔！¡Ánimo! 多練習幾次一定會進步。";
             }
 
             document.getElementById('result-modal').classList.remove('hidden');
-            
-            // If there's a wrong answer, store it for scrolling later
-            window._firstWrong = firstWrongIndex;
+        }
+
+        function resetQuiz() {
+            // 重置狀態與時間記錄
+            quizEndTime = null; 
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('entry-modal').classList.remove('hidden');
+            document.body.classList.add('no-scroll');
+            document.getElementById('student-id-input').value = studentId; 
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('progress-text').textContent = '0 / 20';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function closeModal() {
             document.getElementById('result-modal').classList.add('hidden');
-            if (window._firstWrong !== -1) {
-                document.getElementById(`q-box-${window._firstWrong}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
-        window.onload = renderQuiz;
     </script>
 </body>
 </html>
