@@ -653,14 +653,14 @@
         titleEl.addEventListener('touchend', cancelPress);
         titleEl.addEventListener('touchcancel', cancelPress);
 
-        function adminAuth() {
+        window.adminAuth = () => {
             const pw = prompt("請輸入管理員密碼：");
             if (pw === "teacher123") {
                 isAdmin = true;
                 alert("已開啟管理員模式");
                 showRecords();
             }
-        }
+        };
 
         window.hideRecords = () => document.getElementById('records-modal').classList.add('hidden');
         window.closeModal = () => {
