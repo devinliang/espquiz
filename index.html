@@ -266,18 +266,6 @@
             font-weight: bold;
             cursor: pointer;
         }
-
-        .warning-bar {
-            background-color: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-            border-radius: 0.75rem;
-            padding: 0.9rem 1rem;
-            margin: 1rem auto 0;
-            max-width: 58rem;
-            text-align: center;
-            font-size: 0.95rem;
-        }
     </style>
 </head>
 <body class="no-scroll">
@@ -320,7 +308,6 @@
             </div>
         </div>
     </header>
-    <div id="cloud-warning" class="warning-bar hidden">雲端功能尚未啟用，僅本地答題可用。部署時請檢查 Firebase 設定。</div>
 
     <main class="max-w-3xl mx-auto px-4 mt-8">
         <div id="quiz-container" class="space-y-6"></div>
@@ -384,17 +371,29 @@
         const auth = getAuth(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
-        let user = null, isAdmin = false;
+        let user = null, isAdmin = false, authReady = false;
 
         const initAuth = async () => {
             if (!auth) return;
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                authReady = true;
+            } catch (e) {
+                console.error('認證失敗:', e);
+                authReady = true; // 即使失敗也要標記為完成，避免無限等待
             }
         };
-        onAuthStateChanged(auth, u => user = u);
+
+        onAuthStateChanged(auth, u => {
+            user = u;
+            authReady = true;
+        });
+
+        // 初始化認證
         initAuth();
 
         const rawData = [
@@ -518,26 +517,54 @@
             document.getElementById('result-modal').classList.remove('hidden');
 
             // 存入雲端
-            if (user) {
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
-                        studentId, score, sec, createdAt: serverTimestamp(), dateStr
-                    });
-                    document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
-                } catch (e) { 
-                    document.getElementById('save-status').textContent = "✗ 存檔失敗，請手動截圖"; 
+            const saveToCloud = async () => {
+                // 等待認證完成，最多等 5 秒
+                let waitCount = 0;
+                while (!authReady && waitCount < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waitCount++;
                 }
-            }
+
+                if (user && db) {
+                    try {
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
+                            studentId, score, sec, createdAt: serverTimestamp(), dateStr
+                        });
+                        document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
+                    } catch (e) {
+                        console.error('儲存失敗:', e);
+                        document.getElementById('save-status').textContent = "✗ 存檔失敗，請手動截圖";
+                    }
+                } else {
+                    document.getElementById('save-status').textContent = "✗ 雲端功能未就緒，請手動截圖";
+                }
+            };
+
+            saveToCloud();
         };
 
         window.showRecords = async () => {
             const list = document.getElementById('records-list');
             list.innerHTML = "<p class='text-center italic'>載入中...</p>";
             document.getElementById('records-modal').classList.remove('hidden');
+
             if (!db) {
                 list.innerHTML = "<p class='text-center italic'>未啟用雲端功能，無法查看記錄。</p>";
                 return;
             }
+
+            // 等待認證完成
+            let waitCount = 0;
+            while (!authReady && waitCount < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
+            }
+
+            if (!user) {
+                list.innerHTML = "<p class='text-center italic'>認證未完成，無法查看記錄。</p>";
+                return;
+            }
+
             try {
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
                 const snap = await getDocs(q);
@@ -567,6 +594,10 @@
         window.deleteRecord = async (docId) => {
             if (!db) {
                 alert('無法刪除，雲端功能未啟用。');
+                return;
+            }
+            if (!user) {
+                alert('無法刪除，認證未完成。');
                 return;
             }
             if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
