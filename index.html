@@ -369,15 +369,15 @@
         import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase 初始化，請將下方 placeholder 改成你自己的 Firebase 專案設定
+        // Firebase 初始化，已設定為你的專案設定
         const firebaseConfig = {
-           apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
-  authDomain: "espquiz.firebaseapp.com",
-  projectId: "espquiz",
-  storageBucket: "espquiz.firebasestorage.app",
-  messagingSenderId: "1093867864868",
-  appId: "1:1093867864868:web:ec23427334ffb0597929b1",
-  measurementId: "G-NWNFL50DXS"
+            apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
+            authDomain: "espquiz.firebaseapp.com",
+            projectId: "espquiz",
+            storageBucket: "espquiz.firebasestorage.app",
+            messagingSenderId: "1093867864868",
+            appId: "1:1093867864868:web:ec23427334ffb0597929b1",
+            measurementId: "G-NWNFL50DXS"
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
