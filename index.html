@@ -340,9 +340,15 @@
     <!-- 排行榜/記錄視窗 -->
     <div id="records-modal" class="hidden modal-overlay">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="records-title" class="text-xl font-bold cursor-help" title="老師管理請長按標題">歷史挑戰記錄</h2>
-                <button onclick="hideRecords()" class="text-slate-400 font-bold px-2">✕</button>
+            <div class="flex justify-between items-center mb-6 gap-2">
+                <div class="flex flex-col">
+                    <h2 id="records-title" class="text-xl font-bold cursor-help" title="老師管理請長按標題">歷史挑戰記錄</h2>
+                    <span class="text-xs text-slate-500">長按標題或按此進入老師管理模式</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="adminAuth()" class="text-slate-500 text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50">老師管理</button>
+                    <button onclick="hideRecords()" class="text-slate-400 font-bold px-2">✕</button>
+                </div>
             </div>
             <div id="records-list" class="space-y-2 text-left">
                 <p class="text-slate-500 py-4 italic text-center">載入中...</p>
@@ -639,8 +645,13 @@
         
         titleEl.addEventListener('mousedown', startPress);
         titleEl.addEventListener('mouseup', cancelPress);
+        titleEl.addEventListener('mouseleave', cancelPress);
+        titleEl.addEventListener('pointerdown', startPress);
+        titleEl.addEventListener('pointerup', cancelPress);
+        titleEl.addEventListener('pointercancel', cancelPress);
         titleEl.addEventListener('touchstart', startPress);
         titleEl.addEventListener('touchend', cancelPress);
+        titleEl.addEventListener('touchcancel', cancelPress);
 
         function adminAuth() {
             const pw = prompt("請輸入管理員密碼：");
