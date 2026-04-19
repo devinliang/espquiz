@@ -368,15 +368,18 @@
         };
 
         // 檢查 Firebase 是否可用
-        let app, db, auth;
+        let app, db, auth, firebaseAvailable = false;
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            console.log('Firebase 初始化成功');
+            firebaseAvailable = true;
+            console.log('✅ Firebase 初始化成功');
         } catch (e) {
-            console.error('Firebase 初始化失敗:', e);
+            console.error('❌ Firebase 初始化失敗:', e);
+            console.error('Firebase config:', firebaseConfig);
             app = db = auth = null;
+            firebaseAvailable = false;
         }
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
@@ -531,10 +534,15 @@
 
             // 存入雲端
             const saveToCloud = async () => {
+                console.log('🔍 檢查 Firebase 狀態...');
+                console.log('Firebase 可用:', firebaseAvailable);
+                console.log('資料庫物件:', !!db);
+                console.log('認證物件:', !!auth);
+
                 // 如果 Firebase 不可用，直接使用本地模式
-                if (!db || !auth) {
-                    console.log('Firebase 不可用，使用本地模式');
-                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
+                if (!firebaseAvailable || !db || !auth) {
+                    console.log('📁 使用本地模式 (Firebase 不可用)');
+                    document.getElementById('save-status').textContent = "📁 本地模式：成績已儲存";
                     return;
                 }
 
@@ -545,22 +553,28 @@
                     waitCount++;
                 }
 
+                console.log('👤 用戶認證狀態:', !!user);
+
                 if (!user) {
-                    console.log('用戶未認證，使用本地模式');
-                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
+                    console.log('📁 使用本地模式 (用戶未認證)');
+                    document.getElementById('save-status').textContent = "📁 本地模式：成績已儲存";
                     return;
                 }
 
                 try {
-                    console.log('嘗試儲存到雲端...');
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
+                    console.log('☁️ 嘗試儲存到雲端...');
+                    const docData = {
                         studentId, score, sec, createdAt: serverTimestamp(), dateStr
-                    });
-                    console.log('雲端儲存成功');
-                    document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
+                    };
+                    console.log('資料內容:', docData);
+
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), docData);
+                    console.log('✅ 雲端儲存成功');
+                    document.getElementById('save-status').textContent = "✅ 成績已存入雲端";
                 } catch (e) {
-                    console.error('雲端儲存失敗，使用本地模式:', e);
-                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
+                    console.error('❌ 雲端儲存失敗:', e);
+                    console.error('錯誤詳情:', e.message);
+                    document.getElementById('save-status').textContent = "📁 本地模式：成績已儲存";
                 }
             };
 

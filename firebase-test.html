@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 連線測試</title>
+</head>
+<body>
+    <h1>Firebase 連線測試</h1>
+    <div id="status">正在檢查 Firebase 連線...</div>
+    <button onclick="testConnection()">測試連線</button>
+    <div id="result"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
+            authDomain: "espquiz.firebaseapp.com",
+            projectId: "espquiz",
+            storageBucket: "espquiz.firebasestorage.app",
+            messagingSenderId: "1093867864868",
+            appId: "1:1093867864868:web:ec23427334ffb0597929b1",
+            measurementId: "G-NWNFL50DXS"
+        };
+
+        let app, db, auth;
+
+        window.testConnection = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '測試中...<br>';
+
+            try {
+                // 初始化 Firebase
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                resultDiv.innerHTML += '✅ Firebase 初始化成功<br>';
+
+                // 測試認證
+                await signInAnonymously(auth);
+                resultDiv.innerHTML += '✅ 匿名認證成功<br>';
+
+                // 測試寫入
+                const testDoc = await addDoc(collection(db, 'test'), {
+                    test: true,
+                    timestamp: new Date()
+                });
+                resultDiv.innerHTML += '✅ 寫入測試成功，文件 ID: ' + testDoc.id + '<br>';
+
+                // 測試讀取
+                const querySnapshot = await getDocs(collection(db, 'test'));
+                resultDiv.innerHTML += '✅ 讀取測試成功，找到 ' + querySnapshot.size + ' 個文件<br>';
+
+                resultDiv.innerHTML += '<br><strong style="color: green;">🎉 Firebase 連線完全正常！</strong>';
+
+            } catch (error) {
+                resultDiv.innerHTML += '<br><strong style="color: red;">❌ 錯誤: ' + error.message + '</strong><br>';
+                console.error('Firebase 測試錯誤:', error);
+            }
+        };
+
+        // 自動測試
+        testConnection();
+    </script>
+</body>
+</html></content>
+<parameter name="filePath">d:\Documents\GitHub\espquiz\firebase-test.html
