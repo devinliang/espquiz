@@ -369,11 +369,19 @@
         import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase 初始化，若未提供 __firebase_config，則只提供本地測驗功能
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
-        const db = app ? getFirestore(app) : null;
-        const auth = app ? getAuth(app) : null;
+        // Firebase 初始化，請將下方 placeholder 改成你自己的 Firebase 專案設定
+        const firebaseConfig = {
+           apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
+  authDomain: "espquiz.firebaseapp.com",
+  projectId: "espquiz",
+  storageBucket: "espquiz.firebasestorage.app",
+  messagingSenderId: "1093867864868",
+  appId: "1:1093867864868:web:ec23427334ffb0597929b1",
+  measurementId: "G-NWNFL50DXS"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
         let user = null, isAdmin = false;
@@ -386,14 +394,8 @@
                 await signInAnonymously(auth);
             }
         };
-        if (auth) {
-            onAuthStateChanged(auth, u => user = u);
-            initAuth();
-        } else {
-            console.warn('Firebase config missing: quiz works locally but cloud save/records are disabled.');
-            const warning = document.getElementById('cloud-warning');
-            if (warning) warning.classList.remove('hidden');
-        }
+        onAuthStateChanged(auth, u => user = u);
+        initAuth();
 
         const rawData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
