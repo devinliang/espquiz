@@ -3,23 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基礎西文一：第一課 動詞變化小考</title>
+    <title>基礎西文一：第一課 動詞變化挑戰</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./styles.css">    
+    <style>
+        /* 導入字體與基礎設定 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #f1f3e9; /* 米綠色調 */
+            --secondary-color: #D6D58E; /* 輔助色 */
+            --accent-color: #9FC131; /* 強調色 */
+            --primary-color: #005C53; /* 主要按鈕顏色 */
+            --text-color: #042940; /* 深海藍文字顏色 */
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding-bottom: 5rem;
+        }
+
+        .no-scroll {
+            overflow: hidden;
+        }
+
+        /* 登入視窗 */
+        #entry-modal {
+            background-color: var(--text-color);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+        }
+
+        #entry-modal.hidden {
+            display: none;
+        }
+
+        #entry-modal .modal-content {
+            background-color: var(--bg-color);
+            border-radius: 1.5rem;
+            padding: 2.5rem 2rem;
+            max-width: 24rem;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(214, 213, 142, 0.3);
+            text-align: center;
+        }
+
+        #student-id-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #ffffff;
+            border: 2px solid var(--secondary-color);
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s;
+            color: var(--text-color);
+        }
+
+        #student-id-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(159, 193, 49, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .start-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            box-shadow: 0 10px 15px -3px rgba(0, 92, 83, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .start-btn:hover {
+            background-color: #00453e;
+            transform: translateY(-1px);
+        }
+
+        /* 固定導覽列 */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(214, 213, 142, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 2px solid var(--accent-color);
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #user-display {
+            font-size: 0.75rem;
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        /* 計時器樣式 */
+        .timer-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            background-color: #ffffff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--accent-color);
+            min-width: 90px;
+            justify-content: center;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* 進度條樣式 */
+        #progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 題目卡片 */
+        .quiz-card {
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(0, 92, 83, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-content {
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.2s;
+            background-color: #fff;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .option-content:hover {
+            background-color: #f9fafb;
+            border-color: var(--secondary-color);
+        }
+
+        input[type="radio"]:checked + .option-content {
+            border-color: var(--primary-color);
+            background-color: #ecfdf5; 
+            color: var(--primary-color);
+            box-shadow: 0 4px 12px -2px rgba(0, 92, 83, 0.15);
+        }
+        
+        input[type="radio"]:disabled + .option-content {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* 提交按鈕 */
+        .btn-submit {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding: 1rem 3.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(0, 92, 83, 0.3);
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--text-color);
+            transform: translateY(-2px);
+        }
+
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(4, 41, 64, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            max-width: 32rem;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 2px solid var(--secondary-color);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #res-score {
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 1rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: #ffffff; }
+        .btn-secondary { background-color: var(--secondary-color); color: var(--primary-color); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #fff;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            border: 1px solid var(--secondary-color);
+        }
+
+        .delete-btn {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body class="pb-20 no-scroll">
+<body class="no-scroll">
 
     <!-- 登入視窗 -->
-    <div id="entry-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-        <div class="modal-content bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
-            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <!-- <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> -->
-                 <img src="./knowledge.png" alt="icon" class="w-10 h-10">
+    <div id="entry-modal">
+        <div class="modal-content">
+            <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <h2 class="text-2xl font-bold mb-2 text-slate-800">歡迎參加挑戰</h2>
             <p class="text-slate-500 mb-6 text-sm">請輸入學號以開始挑戰</p>
-            <input type="text" id="student-id-input" placeholder="例如: 1114204001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl mb-6 focus:border-blue-500 focus:outline-none font-mono">
+            <input type="text" id="student-id-input" placeholder="例如: 1114204001" autocomplete="off">
             <button onclick="startQuiz()" class="start-btn">開始挑戰 ¡Vamos!</button>
         </div>
     </div>
@@ -28,24 +287,24 @@
     <header>
         <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-xl font-bold text-sky-900">基礎西文一：第一課 動詞變化</h1>
-                <span id="user-display" class="text-xs bg-sky-200/50 text-sky-800 px-2 py-0.5 rounded font-mono font-bold"></span>
+                <h1 class="text-xl font-bold text-emerald-900">基礎西文一：第一課 動詞變化</h1>
+                <span id="user-display"></span>
             </div>
             
             <div class="flex items-center gap-4 flex-1 sm:max-w-md">
                 <!-- 進行時間 (計時器) -->
-                <div class="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-lg border border-sky-200 shadow-sm min-w-[85px] justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span id="header-timer" class="text-sm font-mono font-bold text-blue-700">00:00</span>
+                <div class="timer-badge">
+                    <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="header-timer" class="text-sm font-mono font-bold text-emerald-800">00:00</span>
                 </div>
 
                 <!-- 進度條 -->
-                <div class="flex-1 h-3 bg-sky-200 rounded-full overflow-hidden shadow-inner">
-                    <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+                <div class="flex-1 h-3 bg-white/50 rounded-full overflow-hidden shadow-inner border border-emerald-200">
+                    <div id="progress-bar" style="width: 0%"></div>
                 </div>
                 
                 <!-- 進度文字 -->
-                <span id="progress-text" class="text-sm font-bold text-blue-700 whitespace-nowrap min-w-[50px]">0 / 20</span>
+                <span id="progress-text" class="text-sm font-bold text-emerald-800 whitespace-nowrap min-w-[50px]">0 / 20</span>
             </div>
         </div>
     </header>
@@ -58,29 +317,63 @@
     </main>
 
     <!-- 結果視窗 -->
-    <div id="result-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center">
+    <div id="result-modal" class="hidden modal-overlay">
+        <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4 text-slate-800">挑戰結果</h2>
-            <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100 text-left text-sm">
-                <p class="mb-1">學號：<span id="res-id" class="font-bold font-mono text-slate-700"></span></p>
-                <p class="mb-1">完成時間：<span id="res-date" class="text-slate-700"></span></p>
-                <p>使用時間：<span id="res-time" class="text-blue-600 font-bold"></span></p>
+            <div class="bg-white/50 rounded-2xl p-5 mb-6 border border-emerald-100 text-left text-sm space-y-1 shadow-inner">
+                <p>學號：<span id="res-id" class="font-bold font-mono text-slate-700"></span></p>
+                <p>完成時間：<span id="res-date" class="text-slate-700"></span></p>
+                <p>使用時間：<span id="res-time" class="text-emerald-700 font-bold"></span></p>
+                <p id="save-status" class="text-xs text-emerald-600 mt-2 font-bold italic">正在保存成績...</p>
             </div>
-            <div class="text-7xl font-black text-blue-600 mb-4" id="res-score">0</div>
-            <p id="res-msg"></p>
-            <div class="flex flex-col gap-3">
-                <button onclick="closeModal()" id="review-btn" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors">查看解析</button>
-                <button onclick="resetQuiz()" id="restart-btn" class="bg-blue-100 text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-200 transition-colors">重新挑戰</button>
+            <div id="res-score">0</div>
+            <p id="res-msg" class="italic mb-6"></p>
+            
+            <div class="flex flex-col gap-2">
+                <button onclick="closeModal()" class="btn-action btn-primary">查看解析</button>
+                <button onclick="showRecords()" class="btn-action btn-outline">查看全班記錄</button>
+                <button onclick="resetQuiz()" class="btn-action btn-secondary">重新挑戰</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let studentId = "", startTime, endTime, timerInterval, currentData = [];
-        let submitted = false;
-        let lastScore = 0;
-        let lastTimeSec = 0;
-        let lastDateString = "";
+    <!-- 排行榜/記錄視窗 -->
+    <div id="records-modal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="records-title" class="text-xl font-bold cursor-help" title="老師管理請長按標題">歷史挑戰記錄</h2>
+                <button onclick="hideRecords()" class="text-slate-400 font-bold px-2">✕</button>
+            </div>
+            <div id="records-list" class="space-y-2 text-left">
+                <p class="text-slate-500 py-4 italic text-center">載入中...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Firebase 初始化
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
+
+        let user = null, isAdmin = false;
+
+        // 匿名登入
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else { await signInAnonymously(auth); }
+        };
+        onAuthStateChanged(auth, u => user = u);
+        initAuth();
+
         const rawData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
             { q: "ESTAR (tú)", options: ["estás", "está", "estuve"], correct: 0 },
@@ -104,121 +397,95 @@
             { q: "HABLAR (ella)", options: ["habla", "hablas", "hablo"], correct: 0 }
         ];
 
-        function shuffle(arr) {
+        let studentId = "", startTime, endTime, timerInterval, currentData = [], submitted = false;
+
+        const shuffle = arr => {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [arr[i], arr[j]] = [arr[j], arr[i]];
             }
             return arr;
-        }
+        };
 
-        function startQuiz() {
+        window.startQuiz = () => {
             const val = document.getElementById('student-id-input').value.trim();
-            if (!val) return;
+            if (!val) {
+                document.getElementById('student-id-input').style.borderColor = "#ef4444";
+                return;
+            }
             studentId = val;
             document.getElementById('user-display').textContent = studentId;
             document.getElementById('entry-modal').classList.add('hidden');
             document.body.classList.remove('no-scroll');
             
             window.scrollTo(0, 0);
-            
             startTime = new Date();
-            endTime = null;
-            submitted = false;
-            lastScore = 0;
-            lastTimeSec = 0;
-            lastDateString = "";
-            
-            // 啟動計時器
             if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateHeaderTimer, 1000);
-            
-            initData();
-            render();
-            updProgress();
-        }
+            timerInterval = setInterval(() => {
+                const sec = Math.floor((new Date() - startTime) / 1000);
+                document.getElementById('header-timer').textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+            }, 1000);
 
-        function updateHeaderTimer() {
-            if (!startTime || endTime) return;
-            const now = new Date();
-            const sec = Math.floor((now - startTime) / 1000);
-            const mins = String(Math.floor(sec / 60)).padStart(2, '0');
-            const secs = String(sec % 60).padStart(2, '0');
-            document.getElementById('header-timer').textContent = `${mins}:${secs}`;
-        }
-
-        function initData() {
+            // 題目順序固定，但選項隨機
             currentData = rawData.map(d => {
-                const opts = [...d.options];
-                const correctText = opts[d.correct];
-                shuffle(opts);
-                return { ...d, options: opts, correct: opts.indexOf(correctText) };
+                const opts = shuffle([...d.options]);
+                return { ...d, options: opts, correct: opts.indexOf(rawData[rawData.indexOf(d)].options[0]) };
             });
-        }
 
-        function render() {
             document.getElementById('quiz-container').innerHTML = currentData.map((d, i) => `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all duration-300" id="q-box-${i}">
+                <div class="quiz-card" id="q-box-${i}">
                     <h3 class="text-xl font-bold mb-5 text-slate-800">第 ${i+1} 題：${d.q}</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         ${d.options.map((opt, oi) => `
                             <label class="cursor-pointer">
                                 <input type="radio" name="q${i}" value="${oi}" class="hidden peer" onchange="updProgress()">
-                                <div class="option-content peer-checked:border-blue-500">${opt}</div>
+                                <div class="option-content peer-checked:border-emerald-600">${opt}</div>
                             </label>
                         `).join('')}
                     </div>
                     <div id="f-${i}" class="hidden mt-4 p-4 rounded-xl text-sm border font-medium"></div>
                 </div>
             `).join('');
-        }
+            updProgress();
+        };
 
-        function updProgress() {
+        window.updProgress = () => {
+            if (submitted) return;
             let done = 0;
             currentData.forEach((_, i) => { if(document.querySelector(`input[name="q${i}"]:checked`)) done++; });
-            document.getElementById('progress-bar').style.width = (done/20*100)+'%';
-            document.getElementById('progress-text').textContent = `${done} / 20`;
-        }
+            document.getElementById('progress-bar').style.width = (done/rawData.length*100)+'%';
+            document.getElementById('progress-text').textContent = `${done} / ${rawData.length}`;
+        };
 
-        function checkAnswers() {
-            if (submitted) {
-                document.getElementById('res-id').textContent = studentId;
-                document.getElementById('res-date').textContent = lastDateString;
-                document.getElementById('res-time').textContent = `${Math.floor(lastTimeSec/60)}分${lastTimeSec%60}秒`;
-                document.getElementById('res-score').textContent = lastScore;
-                document.getElementById('result-modal').classList.remove('hidden');
-                return;
-            }
-            endTime = new Date();
-            clearInterval(timerInterval); // 停止計時
-            const sec = Math.floor((endTime - startTime) / 1000);
+        window.checkAnswers = async () => {
+            if (submitted) return document.getElementById('result-modal').classList.remove('hidden');
+            
+            endTime = new Date(); 
+            clearInterval(timerInterval);
+            
             let score = 0;
             currentData.forEach((d, i) => {
                 const sel = document.querySelector(`input[name="q${i}"]:checked`);
                 const f = document.getElementById(`f-${i}`);
-                const isCorrect = sel && parseInt(sel.value) === d.correct;
-                
-                f.className = "mt-4 p-4 rounded-xl text-sm border font-medium " + (isCorrect ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200");
-                if (isCorrect) score += 5;
-                f.innerHTML = isCorrect ? "✓ 正確" : `✗ 錯誤。正確答案：<span class="font-bold underline">${d.options[d.correct]}</span>`;
+                const ok = sel && parseInt(sel.value) === d.correct;
+                if (ok) score += 5;
+                f.className = `mt-4 p-4 rounded-xl text-sm border font-medium ${ok ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+                f.innerHTML = ok ? "✓ 正確" : `✗ 錯誤。正確答案：<span class="font-bold underline">${d.options[d.correct]}</span>`;
                 f.classList.remove('hidden');
             });
-            
-            // 禁用所有答案选项
-            document.querySelectorAll('input[type="radio"]').forEach(radio => {
-                radio.disabled = true;
-            });
-            
-            lastScore = score;
-            lastTimeSec = sec;
-            lastDateString = endTime.toLocaleString('zh-TW', { hour12: false });
+
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
             submitted = true;
-            
+
+            const sec = Math.floor((endTime - startTime) / 1000);
+            const durationText = `${Math.floor(sec/60)}分${sec%60}秒`;
+            const dateStr = endTime.toLocaleString('zh-TW', { hour12: false });
+
             document.getElementById('res-id').textContent = studentId;
-            document.getElementById('res-date').textContent = lastDateString;
-            document.getElementById('res-time').textContent = `${Math.floor(sec/60)}分${sec%60}秒`;
+            document.getElementById('res-date').textContent = dateStr;
+            document.getElementById('res-time').textContent = durationText;
             document.getElementById('res-score').textContent = score;
-            
+
             const msg = document.getElementById('res-msg');
             if (score === 100) msg.textContent = "¡Excelente! 完美掌握！";
             else if (score >= 80) msg.textContent = "¡Muy bien! 表現優異！";
@@ -226,29 +493,84 @@
             else msg.textContent = "¡Ánimo! 還需要多練習喔。";
 
             document.getElementById('result-modal').classList.remove('hidden');
+
+            // 存入雲端
+            if (user) {
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
+                        studentId, score, sec, createdAt: serverTimestamp(), dateStr
+                    });
+                    document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
+                } catch (e) { 
+                    document.getElementById('save-status').textContent = "✗ 存檔失敗，請手動截圖"; 
+                }
+            }
+        };
+
+        window.showRecords = async () => {
+            const list = document.getElementById('records-list');
+            list.innerHTML = "<p class='text-center italic'>載入中...</p>";
+            document.getElementById('records-modal').classList.remove('hidden');
+            try {
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
+                const snap = await getDocs(q);
+                let recs = []; snap.forEach(doc => recs.push({ docId: doc.id, ...doc.data() }));
+                recs.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                
+                if (recs.length === 0) {
+                    list.innerHTML = "<p class='text-center italic'>尚無記錄</p>";
+                    return;
+                }
+
+                list.innerHTML = recs.map(r => `
+                    <div class="record-item">
+                        <div>
+                            <span class="font-bold text-emerald-900">${r.studentId}</span>
+                            <div class="text-[10px] text-slate-400 leading-none mt-1">${r.dateStr}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-black text-emerald-600">${r.score}分</span>
+                            ${isAdmin ? `<br><span class="delete-btn" onclick="deleteRecord('${r.docId}')">刪除</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { list.innerHTML = "載入失敗"; }
+        };
+
+        window.deleteRecord = async (docId) => {
+            if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
+                showRecords();
+            } catch (e) { alert('刪除失敗'); }
+        };
+
+        // 管理員模式：長按標題
+        let pressTimer;
+        const titleEl = document.getElementById('records-title');
+        const startPress = () => pressTimer = setTimeout(adminAuth, 3000);
+        const cancelPress = () => clearTimeout(pressTimer);
+        
+        titleEl.addEventListener('mousedown', startPress);
+        titleEl.addEventListener('mouseup', cancelPress);
+        titleEl.addEventListener('touchstart', startPress);
+        titleEl.addEventListener('touchend', cancelPress);
+
+        function adminAuth() {
+            const pw = prompt("請輸入管理員密碼：");
+            if (pw === "teacher123") {
+                isAdmin = true;
+                alert("已開啟管理員模式");
+                showRecords();
+            }
         }
 
-        function resetQuiz() {
-            clearInterval(timerInterval);
-            document.getElementById('header-timer').textContent = "00:00";
-            document.getElementById('result-modal').classList.add('hidden');
-            document.getElementById('entry-modal').classList.remove('hidden');
-            document.body.classList.add('no-scroll');
-            submitted = false;
-            lastScore = 0;
-            lastTimeSec = 0;
-            lastDateString = "";
-            
-            document.getElementById('progress-bar').style.width = '0%';
-            document.getElementById('progress-text').textContent = `0 / 20`;
-            
-            window.scrollTo(0, 0);
-        }
-
-        function closeModal() { 
+        window.hideRecords = () => document.getElementById('records-modal').classList.add('hidden');
+        window.closeModal = () => {
             document.getElementById('result-modal').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        };
+        window.resetQuiz = () => location.reload();
     </script>
 </body>
 </html>

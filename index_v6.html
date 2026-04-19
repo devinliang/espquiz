@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基礎西文一：第一課 動詞變化小考</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./styles.css">    
+</head>
+<body class="pb-20 no-scroll">
+
+    <!-- 登入視窗 -->
+    <div id="entry-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+        <div class="modal-content bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <!-- <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> -->
+                 <img src="./knowledge.png" alt="icon" class="w-10 h-10">
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-slate-800">歡迎參加挑戰</h2>
+            <p class="text-slate-500 mb-6 text-sm">請輸入學號以開始挑戰</p>
+            <input type="text" id="student-id-input" placeholder="例如: 1114204001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl mb-6 focus:border-blue-500 focus:outline-none font-mono">
+            <button onclick="startQuiz()" class="start-btn">開始挑戰 ¡Vamos!</button>
+        </div>
+    </div>
+
+    <!-- 固定導覽列 -->
+    <header>
+        <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-sky-900">基礎西文一：第一課 動詞變化</h1>
+                <span id="user-display" class="text-xs bg-sky-200/50 text-sky-800 px-2 py-0.5 rounded font-mono font-bold"></span>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-1 sm:max-w-md">
+                <!-- 進行時間 (計時器) -->
+                <div class="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-lg border border-sky-200 shadow-sm min-w-[85px] justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="header-timer" class="text-sm font-mono font-bold text-blue-700">00:00</span>
+                </div>
+
+                <!-- 進度條 -->
+                <div class="flex-1 h-3 bg-sky-200 rounded-full overflow-hidden shadow-inner">
+                    <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                
+                <!-- 進度文字 -->
+                <span id="progress-text" class="text-sm font-bold text-blue-700 whitespace-nowrap min-w-[50px]">0 / 20</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-8">
+        <div id="quiz-container" class="space-y-6"></div>
+        <div class="mt-12 text-center">
+            <button onclick="checkAnswers()" class="btn-submit">提交並查看結果</button>
+        </div>
+    </main>
+
+    <!-- 結果視窗 -->
+    <div id="result-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">挑戰結果</h2>
+            <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100 text-left text-sm">
+                <p class="mb-1">學號：<span id="res-id" class="font-bold font-mono text-slate-700"></span></p>
+                <p class="mb-1">完成時間：<span id="res-date" class="text-slate-700"></span></p>
+                <p>使用時間：<span id="res-time" class="text-blue-600 font-bold"></span></p>
+            </div>
+            <div class="text-7xl font-black text-blue-600 mb-4" id="res-score">0</div>
+            <p id="res-msg"></p>
+            <div class="flex flex-col gap-3">
+                <button onclick="closeModal()" id="review-btn" class="bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors">查看解析</button>
+                <button onclick="resetQuiz()" id="restart-btn" class="bg-blue-100 text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-200 transition-colors">重新挑戰</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let studentId = "", startTime, endTime, timerInterval, currentData = [];
+        let submitted = false;
+        let lastScore = 0;
+        let lastTimeSec = 0;
+        let lastDateString = "";
+        const rawData = [
+            { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
+            { q: "ESTAR (tú)", options: ["estás", "está", "estuve"], correct: 0 },
+            { q: "PODER (yo)", options: ["puedo", "puede", "podemos"], correct: 0 },
+            { q: "REPETIR (tú)", options: ["repites", "repite", "repetimos"], correct: 0 },
+            { q: "ENTENDER (yo)", options: ["entiendo", "entiendes", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (tú)", options: ["te llamas", "se llama", "me llamo"], correct: 0 },
+            { q: "APELLIDARSE (él)", options: ["se apellida", "me apellido", "te apellidas"], correct: 0 },
+            { q: "SER (ellos)", options: ["son", "somos", "sois"], correct: 0 },
+            { q: "ESTAR (nosotros)", options: ["estamos", "están", "estuve"], correct: 0 },
+            { q: "PODER (él)", options: ["puede", "puedo", "pueden"], correct: 0 },
+            { q: "REPETIR (nosotros)", options: ["repetimos", "repiten", "repito"], correct: 0 },
+            { q: "ENTENDER (ellos)", options: ["entienden", "entiendo", "entendemos"], correct: 0 },
+            { q: "LLAMARSE (yo)", options: ["me llamo", "te llamas", "se llama"], correct: 0 },
+            { q: "APELLIDARSE (nosotros)", options: ["nos apellidamos", "se apellidan", "me apellido"], correct: 0 },
+            { q: "LEER (yo)", options: ["leo", "lees", "lee"], correct: 0 },
+            { q: "MIRAR (tú)", options: ["miras", "mira", "miro"], correct: 0 },
+            { q: "ESCUCHAR (ellos)", options: ["escuchan", "escuchamos", "escucho"], correct: 0 },
+            { q: "ESCRIBIR (yo)", options: ["escribo", "escribe", "escribes"], correct: 0 },
+            { q: "PREGUNTAR (vosotros)", options: ["preguntáis", "preguntan", "pregunto"], correct: 0 },
+            { q: "HABLAR (ella)", options: ["habla", "hablas", "hablo"], correct: 0 }
+        ];
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startQuiz() {
+            const val = document.getElementById('student-id-input').value.trim();
+            if (!val) return;
+            studentId = val;
+            document.getElementById('user-display').textContent = studentId;
+            document.getElementById('entry-modal').classList.add('hidden');
+            document.body.classList.remove('no-scroll');
+            
+            window.scrollTo(0, 0);
+            
+            startTime = new Date();
+            endTime = null;
+            submitted = false;
+            lastScore = 0;
+            lastTimeSec = 0;
+            lastDateString = "";
+            
+            // 啟動計時器
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateHeaderTimer, 1000);
+            
+            initData();
+            render();
+            updProgress();
+        }
+
+        function updateHeaderTimer() {
+            if (!startTime || endTime) return;
+            const now = new Date();
+            const sec = Math.floor((now - startTime) / 1000);
+            const mins = String(Math.floor(sec / 60)).padStart(2, '0');
+            const secs = String(sec % 60).padStart(2, '0');
+            document.getElementById('header-timer').textContent = `${mins}:${secs}`;
+        }
+
+        function initData() {
+            currentData = rawData.map(d => {
+                const opts = [...d.options];
+                const correctText = opts[d.correct];
+                shuffle(opts);
+                return { ...d, options: opts, correct: opts.indexOf(correctText) };
+            });
+        }
+
+        function render() {
+            document.getElementById('quiz-container').innerHTML = currentData.map((d, i) => `
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-all duration-300" id="q-box-${i}">
+                    <h3 class="text-xl font-bold mb-5 text-slate-800">第 ${i+1} 題：${d.q}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        ${d.options.map((opt, oi) => `
+                            <label class="cursor-pointer">
+                                <input type="radio" name="q${i}" value="${oi}" class="hidden peer" onchange="updProgress()">
+                                <div class="option-content peer-checked:border-blue-500">${opt}</div>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="f-${i}" class="hidden mt-4 p-4 rounded-xl text-sm border font-medium"></div>
+                </div>
+            `).join('');
+        }
+
+        function updProgress() {
+            let done = 0;
+            currentData.forEach((_, i) => { if(document.querySelector(`input[name="q${i}"]:checked`)) done++; });
+            document.getElementById('progress-bar').style.width = (done/20*100)+'%';
+            document.getElementById('progress-text').textContent = `${done} / 20`;
+        }
+
+        function checkAnswers() {
+            if (submitted) {
+                document.getElementById('res-id').textContent = studentId;
+                document.getElementById('res-date').textContent = lastDateString;
+                document.getElementById('res-time').textContent = `${Math.floor(lastTimeSec/60)}分${lastTimeSec%60}秒`;
+                document.getElementById('res-score').textContent = lastScore;
+                document.getElementById('result-modal').classList.remove('hidden');
+                return;
+            }
+            endTime = new Date();
+            clearInterval(timerInterval); // 停止計時
+            const sec = Math.floor((endTime - startTime) / 1000);
+            let score = 0;
+            currentData.forEach((d, i) => {
+                const sel = document.querySelector(`input[name="q${i}"]:checked`);
+                const f = document.getElementById(`f-${i}`);
+                const isCorrect = sel && parseInt(sel.value) === d.correct;
+                
+                f.className = "mt-4 p-4 rounded-xl text-sm border font-medium " + (isCorrect ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200");
+                if (isCorrect) score += 5;
+                f.innerHTML = isCorrect ? "✓ 正確" : `✗ 錯誤。正確答案：<span class="font-bold underline">${d.options[d.correct]}</span>`;
+                f.classList.remove('hidden');
+            });
+            
+            // 禁用所有答案选项
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.disabled = true;
+            });
+            
+            lastScore = score;
+            lastTimeSec = sec;
+            lastDateString = endTime.toLocaleString('zh-TW', { hour12: false });
+            submitted = true;
+            
+            document.getElementById('res-id').textContent = studentId;
+            document.getElementById('res-date').textContent = lastDateString;
+            document.getElementById('res-time').textContent = `${Math.floor(sec/60)}分${sec%60}秒`;
+            document.getElementById('res-score').textContent = score;
+            
+            const msg = document.getElementById('res-msg');
+            if (score === 100) msg.textContent = "¡Excelente! 完美掌握！";
+            else if (score >= 80) msg.textContent = "¡Muy bien! 表現優異！";
+            else if (score >= 60) msg.textContent = "及格了，再接再厲！";
+            else msg.textContent = "¡Ánimo! 還需要多練習喔。";
+
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function resetQuiz() {
+            clearInterval(timerInterval);
+            document.getElementById('header-timer').textContent = "00:00";
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('entry-modal').classList.remove('hidden');
+            document.body.classList.add('no-scroll');
+            submitted = false;
+            lastScore = 0;
+            lastTimeSec = 0;
+            lastDateString = "";
+            
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('progress-text').textContent = `0 / 20`;
+            
+            window.scrollTo(0, 0);
+        }
+
+        function closeModal() { 
+            document.getElementById('result-modal').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
