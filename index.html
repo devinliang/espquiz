@@ -331,27 +331,8 @@
             
             <div class="flex flex-col gap-2">
                 <button onclick="closeModal()" class="btn-action btn-primary">查看解析</button>
-                <button onclick="showRecords()" class="btn-action btn-outline">查看全班記錄</button>
+                <button onclick="window.location.href='teacher.html'" class="btn-action btn-outline">老師專用：查看/管理成績</button>
                 <button onclick="resetQuiz()" class="btn-action btn-secondary">重新挑戰</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 排行榜/記錄視窗 -->
-    <div id="records-modal" class="hidden modal-overlay">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-6 gap-2">
-                <div class="flex flex-col">
-                    <h2 id="records-title" class="text-xl font-bold cursor-help" title="老師管理請長按標題">歷史挑戰記錄</h2>
-                    <span class="text-xs text-slate-500">長按標題或按此進入老師管理模式</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="adminAuth()" class="text-slate-500 text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50">老師管理</button>
-                    <button onclick="hideRecords()" class="text-slate-400 font-bold px-2">✕</button>
-                </div>
-            </div>
-            <div id="records-list" class="space-y-2 text-left">
-                <p class="text-slate-500 py-4 italic text-center">載入中...</p>
             </div>
         </div>
     </div>
@@ -570,99 +551,6 @@
             saveToCloud();
         };
 
-        window.showRecords = async () => {
-            const list = document.getElementById('records-list');
-            list.innerHTML = "<p class='text-center italic'>載入中...</p>";
-            document.getElementById('records-modal').classList.remove('hidden');
-
-            if (!db || !auth) {
-                list.innerHTML = "<p class='text-center italic'>Firebase 未初始化，無法查看記錄。</p>";
-                return;
-            }
-
-            // 等待認證完成
-            let waitCount = 0;
-            while (!authReady && waitCount < 30) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                waitCount++;
-            }
-
-            if (!user) {
-                list.innerHTML = "<p class='text-center italic'>認證未完成，無法查看記錄。</p>";
-                return;
-            }
-
-            try {
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
-                const snap = await getDocs(q);
-                let recs = []; snap.forEach(doc => recs.push({ docId: doc.id, ...doc.data() }));
-                recs.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-                if (recs.length === 0) {
-                    list.innerHTML = "<p class='text-center italic'>尚無記錄</p>";
-                    return;
-                }
-
-                list.innerHTML = recs.map(r => `
-                    <div class="record-item">
-                        <div>
-                            <span class="font-bold text-emerald-900">${r.studentId}</span>
-                            <div class="text-[10px] text-slate-400 leading-none mt-1">${r.dateStr}</div>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-black text-emerald-600">${r.score}分</span>
-                            ${isAdmin ? `<br><span class="delete-btn" onclick="deleteRecord('${r.docId}')">刪除</span>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                console.error('載入記錄失敗:', e);
-                list.innerHTML = "<p class='text-center italic'>載入失敗</p>";
-            }
-        };
-
-        window.deleteRecord = async (docId) => {
-            if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
-            if (!db || !auth) {
-                alert('Firebase 未初始化，無法刪除記錄。');
-                return;
-            }
-
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
-                showRecords();
-            } catch (e) {
-                console.error('刪除記錄失敗:', e);
-                alert('刪除失敗');
-            }
-        };
-
-        // 管理員模式：長按標題
-        let pressTimer;
-        const titleEl = document.getElementById('records-title');
-        const startPress = () => pressTimer = setTimeout(adminAuth, 3000);
-        const cancelPress = () => clearTimeout(pressTimer);
-        
-        titleEl.addEventListener('mousedown', startPress);
-        titleEl.addEventListener('mouseup', cancelPress);
-        titleEl.addEventListener('mouseleave', cancelPress);
-        titleEl.addEventListener('pointerdown', startPress);
-        titleEl.addEventListener('pointerup', cancelPress);
-        titleEl.addEventListener('pointercancel', cancelPress);
-        titleEl.addEventListener('touchstart', startPress);
-        titleEl.addEventListener('touchend', cancelPress);
-        titleEl.addEventListener('touchcancel', cancelPress);
-
-        window.adminAuth = () => {
-            const pw = prompt("請輸入管理員密碼：");
-            if (pw === "teacher123") {
-                isAdmin = true;
-                alert("已開啟管理員模式");
-                showRecords();
-            }
-        };
-
-        window.hideRecords = () => document.getElementById('records-modal').classList.add('hidden');
         window.closeModal = () => {
             document.getElementById('result-modal').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });

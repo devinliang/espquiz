@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>老師專用：成績查看與管理</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        :root {
+            --bg-color: #f1f3e9;
+            --secondary-color: #D6D58E;
+            --accent-color: #9FC131;
+            --primary-color: #005C53;
+            --text-color: #042940;
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            min-height: 100vh;
+        }
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(214, 213, 142, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 2px solid var(--accent-color);
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-action {
+            width: 100%;
+            padding: 1rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+        }
+        .btn-primary { background-color: var(--primary-color); color: #ffffff; }
+        .btn-secondary { background-color: var(--secondary-color); color: var(--primary-color); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #fff;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            border: 1px solid var(--secondary-color);
+        }
+        .delete-btn {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 0.3rem;
+        }
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        #teacher-password {
+            flex: 1;
+            min-width: 12rem;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid var(--secondary-color);
+            background: #fff;
+            color: var(--text-color);
+        }
+        #teacher-password:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(159, 193, 49, 0.2);
+            border-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-emerald-900">老師專用：成績查看與管理</h1>
+                <p class="text-sm text-slate-600 mt-1">請輸入老師密碼後即可查看學生成績，並可直接刪除錯誤記錄。</p>
+            </div>
+            <a href="index.html" class="btn-action btn-outline max-w-max">返回學生測驗</a>
+        </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <section id="auth-panel" class="bg-white rounded-3xl border border-emerald-200 p-6 shadow-sm mb-8">
+            <h2 class="text-lg font-bold mb-3">教師驗證</h2>
+            <p class="text-slate-500 mb-4">為避免非授權使用，請輸入老師密碼後再進入成績管理。</p>
+            <div class="input-group">
+                <input id="teacher-password" type="password" placeholder="輸入老師密碼" autocomplete="off">
+                <button onclick="unlockTeacher()" class="btn-action btn-primary max-w-max">進入管理</button>
+            </div>
+            <p id="auth-msg" class="text-sm text-red-600 mt-3"></p>
+        </section>
+
+        <section id="records-section" class="hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div>
+                    <h2 class="text-xl font-bold text-emerald-900">成績記錄</h2>
+                    <p class="text-slate-500 text-sm">最新記錄會依時間排序，您可以直接刪除不正確的項目。</p>
+                </div>
+                <button onclick="showRecords()" class="btn-action btn-secondary max-w-max">重新整理列表</button>
+            </div>
+            <div id="records-list" class="space-y-3">
+                <p class="text-slate-500 py-8 italic text-center">請先輸入密碼。</p>
+            </div>
+        </section>
+    </main>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
+            authDomain: "espquiz.firebaseapp.com",
+            projectId: "espquiz",
+            storageBucket: "espquiz.firebasestorage.app",
+            messagingSenderId: "1093867864868",
+            appId: "1:1093867864868:web:ec23427334ffb0597929b1",
+            measurementId: "G-NWNFL50DXS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
+
+        let user = null;
+        let authReady = false;
+        let unlocked = false;
+
+        const initAuth = async () => {
+            if (!auth) {
+                authReady = true;
+                return;
+            }
+            try {
+                await signInAnonymously(auth);
+            } catch (e) {
+                console.error('匿名認證失敗:', e);
+            } finally {
+                authReady = true;
+            }
+        };
+
+        onAuthStateChanged(auth, u => {
+            user = u;
+            authReady = true;
+        });
+
+        initAuth();
+
+        window.unlockTeacher = () => {
+            const pw = document.getElementById('teacher-password').value.trim();
+            const msg = document.getElementById('auth-msg');
+            if (pw !== 'teacher123') {
+                msg.textContent = '密碼錯誤，請重新輸入。';
+                return;
+            }
+            unlocked = true;
+            msg.textContent = '';
+            document.getElementById('auth-panel').classList.add('hidden');
+            document.getElementById('records-section').classList.remove('hidden');
+            showRecords();
+        };
+
+        window.showRecords = async () => {
+            const list = document.getElementById('records-list');
+            list.innerHTML = "<p class='text-center italic text-slate-500 py-8'>載入中...</p>";
+
+            if (!db || !auth) {
+                list.innerHTML = "<p class='text-center italic text-slate-500 py-8'>Firebase 未初始化，無法查看記錄。</p>";
+                return;
+            }
+
+            let waitCount = 0;
+            while (!authReady && waitCount < 30) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
+            }
+
+            if (!user) {
+                list.innerHTML = "<p class='text-center italic text-slate-500 py-8'>認證未完成，無法查看記錄。</p>";
+                return;
+            }
+
+            try {
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
+                const snap = await getDocs(q);
+                let recs = [];
+                snap.forEach(doc => recs.push({ docId: doc.id, ...doc.data() }));
+                recs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                if (recs.length === 0) {
+                    list.innerHTML = "<p class='text-center italic text-slate-500 py-8'>尚無記錄。</p>";
+                    return;
+                }
+
+                list.innerHTML = recs.map(r => `
+                    <div class="record-item">
+                        <div>
+                            <div class="font-bold text-emerald-900">${r.studentId}</div>
+                            <div class="text-[10px] text-slate-400 leading-none mt-1">${r.dateStr || '無日期資料'}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-emerald-600 text-lg">${r.score} 分</div>
+                            <span class="delete-btn" onclick="deleteRecord('${r.docId}')">刪除</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('載入記錄失敗:', e);
+                list.innerHTML = "<p class='text-center italic text-slate-500 py-8'>載入失敗，請稍後重試。</p>";
+            }
+        };
+
+        window.deleteRecord = async (docId) => {
+            if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
+            if (!db || !auth) {
+                alert('Firebase 未初始化，無法刪除記錄。');
+                return;
+            }
+
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
+                showRecords();
+            } catch (e) {
+                console.error('刪除記錄失敗:', e);
+                alert('刪除失敗');
+            }
+        };
+    </script>
+</body>
+</html>
