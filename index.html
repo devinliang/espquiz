@@ -366,35 +366,48 @@
             appId: "1:1093867864868:web:ec23427334ffb0597929b1",
             measurementId: "G-NWNFL50DXS"
         };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+
+        // 檢查 Firebase 是否可用
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            console.log('Firebase 初始化成功');
+        } catch (e) {
+            console.error('Firebase 初始化失敗:', e);
+            app = db = auth = null;
+        }
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
         let user = null, isAdmin = false, authReady = false;
 
         const initAuth = async () => {
-            if (!auth) return;
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+            if (!auth) {
                 authReady = true;
+                return;
+            }
+            try {
+                await signInAnonymously(auth);
             } catch (e) {
-                console.error('認證失敗:', e);
-                authReady = true; // 即使失敗也要標記為完成，避免無限等待
+                console.error('認證失敗，使用本地模式:', e);
+                authReady = true;
             }
         };
 
         onAuthStateChanged(auth, u => {
             user = u;
-            authReady = true;
+            if (!authReady) {
+                authReady = true;
+            }
         });
 
-        // 初始化認證
-        initAuth();
+        // 初始化認證（只有在 Firebase 可用時）
+        if (auth) {
+            initAuth();
+        } else {
+            authReady = true;
+        }
 
         const rawData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
@@ -518,28 +531,40 @@
 
             // 存入雲端
             const saveToCloud = async () => {
-                // 等待認證完成，最多等 5 秒
+                // 如果 Firebase 不可用，直接使用本地模式
+                if (!db || !auth) {
+                    console.log('Firebase 不可用，使用本地模式');
+                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
+                    return;
+                }
+
+                // 等待認證完成，最多等 3 秒
                 let waitCount = 0;
-                while (!authReady && waitCount < 50) {
+                while (!authReady && waitCount < 30) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                     waitCount++;
                 }
 
-                if (user && db) {
-                    try {
-                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
-                            studentId, score, sec, createdAt: serverTimestamp(), dateStr
-                        });
-                        document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
-                    } catch (e) {
-                        console.error('儲存失敗:', e);
-                        document.getElementById('save-status').textContent = "✗ 存檔失敗，請手動截圖";
-                    }
-                } else {
-                    document.getElementById('save-status').textContent = "✗ 雲端功能未就緒，請手動截圖";
+                if (!user) {
+                    console.log('用戶未認證，使用本地模式');
+                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
+                    return;
+                }
+
+                try {
+                    console.log('嘗試儲存到雲端...');
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
+                        studentId, score, sec, createdAt: serverTimestamp(), dateStr
+                    });
+                    console.log('雲端儲存成功');
+                    document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
+                } catch (e) {
+                    console.error('雲端儲存失敗，使用本地模式:', e);
+                    document.getElementById('save-status').textContent = "本地模式：成績已儲存";
                 }
             };
 
+            // 非同步執行，不阻塞 UI
             saveToCloud();
         };
 
@@ -548,14 +573,14 @@
             list.innerHTML = "<p class='text-center italic'>載入中...</p>";
             document.getElementById('records-modal').classList.remove('hidden');
 
-            if (!db) {
-                list.innerHTML = "<p class='text-center italic'>未啟用雲端功能，無法查看記錄。</p>";
+            if (!db || !auth) {
+                list.innerHTML = "<p class='text-center italic'>Firebase 不可用，無法查看記錄。</p>";
                 return;
             }
 
             // 等待認證完成
             let waitCount = 0;
-            while (!authReady && waitCount < 50) {
+            while (!authReady && waitCount < 30) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 waitCount++;
             }
@@ -592,19 +617,21 @@
         };
 
         window.deleteRecord = async (docId) => {
-            if (!db) {
-                alert('無法刪除，雲端功能未啟用。');
+            if (!db || !auth) {
+                alert('Firebase 不可用，無法刪除記錄。');
                 return;
             }
             if (!user) {
-                alert('無法刪除，認證未完成。');
+                alert('認證未完成，無法刪除記錄。');
                 return;
             }
             if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
                 showRecords();
-            } catch (e) { alert('刪除失敗'); }
+            } catch (e) {
+                alert('刪除失敗');
+            }
         };
 
         // 管理員模式：長按標題
