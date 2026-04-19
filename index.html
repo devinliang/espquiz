@@ -350,10 +350,19 @@
         </div>
     </div>
 
-    <!-- 本地儲存腳本 -->
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase 設定（目前停用，使用本地儲存）
+        // Import the functions you need from the SDKs you need
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyDX2irPULG8J9PyE23b-GYu3SKVZAdwEK4",
             authDomain: "espquiz.firebaseapp.com",
@@ -364,13 +373,36 @@
             measurementId: "G-NWNFL50DXS"
         };
 
-        // 目前使用本地儲存，Firebase 功能已停用
-        console.log('📁 使用本地儲存模式 - Firebase 專案需要重新設定');
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
-        const appId = 'spanish-quiz-lesson1';
+        let user = null, isAdmin = false, authReady = false;
 
-        // 本地儲存模式，不需要認證
-        console.log('📁 本地儲存模式啟動');
+        const initAuth = async () => {
+            if (!auth) {
+                authReady = true;
+                return;
+            }
+            try {
+                await signInAnonymously(auth);
+            } catch (e) {
+                console.error('匿名認證失敗:', e);
+            } finally {
+                authReady = true;
+            }
+        };
+
+        onAuthStateChanged(auth, u => {
+            user = u;
+            authReady = true;
+        });
+
+        // 初始化認證
+        initAuth();
 
         const rawData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
@@ -494,36 +526,37 @@
 
             // 存入雲端
             const saveToCloud = async () => {
-                console.log('🔍 Firebase 專案設定錯誤，使用本地儲存模式');
-                console.log('如需雲端功能，請重新設定 Firebase 專案');
+                if (!db || !auth) {
+                    console.error('Firebase 尚未初始化');
+                    document.getElementById('save-status').textContent = "✗ Firebase 未初始化";
+                    return;
+                }
 
-                // 使用 localStorage 作為本地儲存
+                // 等待認證完成，最多 3 秒
+                let waitCount = 0;
+                while (!authReady && waitCount < 30) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waitCount++;
+                }
+
+                if (!user) {
+                    console.error('匿名認證失敗或未完成');
+                    document.getElementById('save-status').textContent = "✗ 認證失敗，請稍後重試";
+                    return;
+                }
+
                 try {
-                    const result = {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'), {
                         studentId,
                         score,
                         sec,
-                        dateStr,
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // 取得現有的成績記錄
-                    const existingRecords = JSON.parse(localStorage.getItem('quiz_results') || '[]');
-                    existingRecords.push(result);
-
-                    // 只保留最新的 50 筆記錄
-                    if (existingRecords.length > 50) {
-                        existingRecords.splice(0, existingRecords.length - 50);
-                    }
-
-                    // 儲存到 localStorage
-                    localStorage.setItem('quiz_results', JSON.stringify(existingRecords));
-
-                    console.log('💾 本地儲存成功');
-                    document.getElementById('save-status').textContent = "💾 本地儲存：成績已儲存";
+                        createdAt: serverTimestamp(),
+                        dateStr
+                    });
+                    document.getElementById('save-status').textContent = "✓ 成績已存入雲端";
                 } catch (e) {
-                    console.error('本地儲存失敗:', e);
-                    document.getElementById('save-status').textContent = "⚠️ 儲存失敗，請手動記錄成績";
+                    console.error('雲端儲存失敗:', e);
+                    document.getElementById('save-status').textContent = "✗ 存檔失敗，請手動截圖";
                 }
             };
 
@@ -537,7 +570,7 @@
             document.getElementById('records-modal').classList.remove('hidden');
 
             if (!db || !auth) {
-                list.innerHTML = "<p class='text-center italic'>Firebase 不可用，無法查看記錄。</p>";
+                list.innerHTML = "<p class='text-center italic'>Firebase 未初始化，無法查看記錄。</p>";
                 return;
             }
 
@@ -554,18 +587,17 @@
             }
 
             try {
-                // 從 localStorage 取得記錄
-                const records = JSON.parse(localStorage.getItem('quiz_results') || '[]');
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
+                const snap = await getDocs(q);
+                let recs = []; snap.forEach(doc => recs.push({ docId: doc.id, ...doc.data() }));
+                recs.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
-                if (records.length === 0) {
-                    list.innerHTML = "<p class='text-center italic'>尚無本地記錄</p>";
+                if (recs.length === 0) {
+                    list.innerHTML = "<p class='text-center italic'>尚無記錄</p>";
                     return;
                 }
 
-                // 排序：最新的在前面
-                records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-                list.innerHTML = records.map(r => `
+                list.innerHTML = recs.map(r => `
                     <div class="record-item">
                         <div>
                             <span class="font-bold text-emerald-900">${r.studentId}</span>
@@ -573,31 +605,26 @@
                         </div>
                         <div class="text-right">
                             <span class="font-black text-emerald-600">${r.score}分</span>
-                            <br><span class="delete-btn" onclick="deleteLocalRecord('${r.timestamp}')">刪除</span>
+                            ${isAdmin ? `<br><span class="delete-btn" onclick="deleteRecord('${r.docId}')">刪除</span>` : ''}
                         </div>
                     </div>
                 `).join('');
-
             } catch (e) {
-                console.error('載入本地記錄失敗:', e);
+                console.error('載入記錄失敗:', e);
                 list.innerHTML = "<p class='text-center italic'>載入失敗</p>";
             }
         };
 
         window.deleteRecord = async (docId) => {
-            // 這個函數現在刪除本地記錄
             if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
+            if (!db || !auth) {
+                alert('Firebase 未初始化，無法刪除記錄。');
+                return;
+            }
 
             try {
-                const records = JSON.parse(localStorage.getItem('quiz_results') || '[]');
-                const filteredRecords = records.filter(r => r.timestamp !== docId);
-
-                if (filteredRecords.length !== records.length) {
-                    localStorage.setItem('quiz_results', JSON.stringify(filteredRecords));
-                    showRecords(); // 重新載入記錄
-                } else {
-                    alert('找不到要刪除的記錄');
-                }
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
+                showRecords();
             } catch (e) {
                 console.error('刪除記錄失敗:', e);
                 alert('刪除失敗');
