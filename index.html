@@ -356,23 +356,29 @@
         import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase 初始化
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        // Firebase 初始化，若未提供 __firebase_config，則只提供本地測驗功能
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
+        const db = app ? getFirestore(app) : null;
+        const auth = app ? getAuth(app) : null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'spanish-quiz-lesson1';
 
         let user = null, isAdmin = false;
 
-        // 匿名登入
         const initAuth = async () => {
+            if (!auth) return;
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
-            } else { await signInAnonymously(auth); }
+            } else {
+                await signInAnonymously(auth);
+            }
         };
-        onAuthStateChanged(auth, u => user = u);
-        initAuth();
+        if (auth) {
+            onAuthStateChanged(auth, u => user = u);
+            initAuth();
+        } else {
+            console.warn('Firebase config missing: quiz works locally but cloud save/records are disabled.');
+        }
 
         const rawData = [
             { q: "SER (yo)", options: ["soy", "eres", "es"], correct: 0 },
@@ -511,6 +517,10 @@
             const list = document.getElementById('records-list');
             list.innerHTML = "<p class='text-center italic'>載入中...</p>";
             document.getElementById('records-modal').classList.remove('hidden');
+            if (!db) {
+                list.innerHTML = "<p class='text-center italic'>未啟用雲端功能，無法查看記錄。</p>";
+                return;
+            }
             try {
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_results'));
                 const snap = await getDocs(q);
@@ -538,6 +548,10 @@
         };
 
         window.deleteRecord = async (docId) => {
+            if (!db) {
+                alert('無法刪除，雲端功能未啟用。');
+                return;
+            }
             if (!confirm('確定要刪除這筆成績記錄嗎？')) return;
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quiz_results', docId));
